@@ -3,7 +3,7 @@
  * Plugin Name: WC Product Customizer
  * Plugin URI:  https://bd.linkedin.com/in/rirakeeb
  * Description: Let customers personalize WooCommerce products from the frontend with a Canva-style editor (text, colors, fonts, drag & drop). Admin defines base designs, sides (front/back/etc.) and editable regions. On order, the admin receives print-ready high-resolution PNGs and a PDF per design.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Rakibul Islam
  * Author URI:  https://bd.linkedin.com/in/rirakeeb
  * Text Domain: wc-product-customizer
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WCPC_VERSION', '1.0.0' );
+define( 'WCPC_VERSION', '1.1.0' );
 define( 'WCPC_FILE', __FILE__ );
 define( 'WCPC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WCPC_URL', plugin_dir_url( __FILE__ ) );
