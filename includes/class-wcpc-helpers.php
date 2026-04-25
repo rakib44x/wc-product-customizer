@@ -18,16 +18,54 @@ class WCPC_Helpers {
 	const META_SETTINGS = '_wcpc_settings';
 
 	/**
+	 * Resolve a product from whatever the caller passed in. Accepts a WC_Product,
+	 * a numeric ID, a WP_Post, a product slug string, or null/anything else.
+	 *
+	 * Needed because builder themes like Hello Elementor populate the
+	 * `$product` global with the product slug string before WooCommerce
+	 * overrides it with a WC_Product instance, and our frontend hooks
+	 * can fire during that narrow window.
+	 *
+	 * @param mixed $product Product-ish.
+	 * @return WC_Product|null
+	 */
+	public static function resolve_product( $product ) {
+		if ( $product instanceof WC_Product ) {
+			return $product;
+		}
+		if ( is_numeric( $product ) ) {
+			$resolved = wc_get_product( (int) $product );
+			return $resolved ? $resolved : null;
+		}
+		if ( $product instanceof WP_Post ) {
+			$resolved = wc_get_product( $product );
+			return $resolved ? $resolved : null;
+		}
+		if ( is_string( $product ) && '' !== $product ) {
+			$post = get_page_by_path( $product, OBJECT, 'product' );
+			if ( $post ) {
+				$resolved = wc_get_product( $post );
+				return $resolved ? $resolved : null;
+			}
+		}
+		// Fallback: use the currently queried post.
+		$id = function_exists( 'get_the_ID' ) ? get_the_ID() : 0;
+		if ( $id ) {
+			$resolved = wc_get_product( $id );
+			return $resolved ? $resolved : null;
+		}
+		return null;
+	}
+
+	/**
 	 * Is the given product customizable?
 	 *
-	 * @param int|WC_Product $product Product or ID.
+	 * @param mixed $product Product, product ID, WP_Post, slug, or anything.
 	 * @return bool
 	 */
 	public static function is_customizable( $product ) {
-		if ( is_numeric( $product ) ) {
-			$product = wc_get_product( $product );
-		}
-		if ( ! $product ) {
+		$product = self::resolve_product( $product );
+		if ( ! $product instanceof WC_Product ) {
 			return false;
 		}
 		return 'yes' === $product->get_meta( self::META_ENABLED );
@@ -64,10 +102,8 @@ class WCPC_Helpers {
 	 * @return array
 	 */
 	public static function get_sides( $product ) {
-		if ( is_numeric( $product ) ) {
-			$product = wc_get_product( $product );
-		}
-		if ( ! $product ) {
+		$product = self::resolve_product( $product );
+		if ( ! $product instanceof WC_Product ) {
 			return array();
 		}
 		$sides = $product->get_meta( self::META_SIDES );
@@ -84,10 +120,8 @@ class WCPC_Helpers {
 	 * @return array
 	 */
 	public static function get_settings( $product ) {
-		if ( is_numeric( $product ) ) {
-			$product = wc_get_product( $product );
-		}
-		if ( ! $product ) {
+		$product = self::resolve_product( $product );
+		if ( ! $product instanceof WC_Product ) {
 			return self::default_settings();
 		}
 		$settings = $product->get_meta( self::META_SETTINGS );

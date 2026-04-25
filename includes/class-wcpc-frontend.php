@@ -41,14 +41,34 @@ class WCPC_Frontend {
 	}
 
 	/**
+	 * Resolve the current product safely. Works even when `global $product`
+	 * is temporarily a slug string (as Hello Elementor does during early
+	 * wp_enqueue_scripts) or when the global has not been set up yet.
+	 *
+	 * @return WC_Product|null
+	 */
+	private static function get_current_product() {
+		global $product;
+		$resolved = WCPC_Helpers::resolve_product( $product );
+		if ( $resolved ) {
+			return $resolved;
+		}
+		$id = function_exists( 'get_queried_object_id' ) ? get_queried_object_id() : 0;
+		if ( ! $id && function_exists( 'get_the_ID' ) ) {
+			$id = get_the_ID();
+		}
+		return $id ? wc_get_product( $id ) : null;
+	}
+
+	/**
 	 * Enqueue.
 	 */
 	public function enqueue_assets() {
 		if ( ! is_product() ) {
 			return;
 		}
-		global $product;
-		if ( ! $product || ! WCPC_Helpers::is_customizable( $product ) ) {
+		$product = self::get_current_product();
+		if ( ! $product instanceof WC_Product || ! WCPC_Helpers::is_customizable( $product ) ) {
 			return;
 		}
 
@@ -127,8 +147,8 @@ class WCPC_Frontend {
 	 * "Customize" button above add-to-cart.
 	 */
 	public function render_customize_button() {
-		global $product;
-		if ( ! $product || ! WCPC_Helpers::is_customizable( $product ) ) {
+		$product = self::get_current_product();
+		if ( ! $product instanceof WC_Product || ! WCPC_Helpers::is_customizable( $product ) ) {
 			return;
 		}
 		$sides = WCPC_Helpers::get_sides( $product );
@@ -146,8 +166,8 @@ class WCPC_Frontend {
 	 * Empty modal mount point.
 	 */
 	public function render_editor_container() {
-		global $product;
-		if ( ! $product || ! WCPC_Helpers::is_customizable( $product ) ) {
+		$product = self::get_current_product();
+		if ( ! $product instanceof WC_Product || ! WCPC_Helpers::is_customizable( $product ) ) {
 			return;
 		}
 		$sides = WCPC_Helpers::get_sides( $product );
